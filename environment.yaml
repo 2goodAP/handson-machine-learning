@@ -155,6 +155,7 @@ dependencies:
 - importlib_resources=6.1.0=pyhd8ed1ab_0
 - ipykernel=6.26.0=pyhf8b6a83_0
 - ipython=8.17.2=pyh41d4057_0
+- ipywidgets=8.1.1=pyhd8ed1ab_0
 - isoduration=20.11.0=pyhd8ed1ab_0
 - isort=5.12.0=pyhd8ed1ab_1
 - itsdangerous=2.1.2=pyhd8ed1ab_0
@@ -174,10 +175,11 @@ dependencies:
 - jupyter_scheduler=2.3.0=pyha770c72_0
 - jupyter_server=2.9.1=pyhd8ed1ab_0
 - jupyter_server_terminals=0.4.4=pyhd8ed1ab_1
-- jupyterlab=4.0.7=pyhd8ed1ab_0
+- jupyterlab=4.0.8=pyhd8ed1ab_0
 - jupyterlab_code_formatter=2.2.1=pyhd8ed1ab_0
 - jupyterlab_pygments=0.2.2=pyhd8ed1ab_0
 - jupyterlab_server=2.25.0=pyhd8ed1ab_0
+- jupyterlab_widgets=3.0.9=pyhd8ed1ab_0
 - keras=2.13.1=pyhd8ed1ab_0
 - keyutils=1.6.1=h166bdaf_0
 - kiwisolver=1.4.5=py310hd41b1e2_1
@@ -417,6 +419,7 @@ dependencies:
 - werkzeug=3.0.1=pyhd8ed1ab_0
 - whatthepatch=1.0.5=pyhd8ed1ab_0
 - wheel=0.41.3=pyhd8ed1ab_0
+- widgetsnbextension=4.0.9=pyhd8ed1ab_0
 - wrapt=1.15.0=py310h2372a71_1
 - xgboost=1.7.6=cuda118_py310hf9f7e87_5
 - xorg-kbproto=1.0.7=h7f98852_1002
