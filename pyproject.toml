@@ -1,0 +1,13 @@
+[tool.jupytext.formats]
+"notebooks/" = "ipynb"
+"src/" = "py:percent"
+
+[tool.pylsp-mypy]
+enabled = true
+dmypy = true
+live_mode = false
+strict = true
+exclude = ["tests/*"]
+
+[tool.ruff]
+target-version = "py310"

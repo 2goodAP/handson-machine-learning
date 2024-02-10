@@ -16,6 +16,7 @@
               with ps; [
                 micromamba
                 graphviz-nox
+                protobuf
               ];
 
             profile = ''

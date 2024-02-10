@@ -1,8 +1,11 @@
+.dmypy.json
 .env
 .venv/
 .ipynb_checkpoints/
 .micromamba/
 .mypy_cache/
+.ropeproject/
+.ruff_cache/
 .virtual_documents/
 
 homl3/
