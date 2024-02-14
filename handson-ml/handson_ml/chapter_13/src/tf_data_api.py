@@ -63,13 +63,13 @@ rs[0]
 # %%
 X_nested = {"a": ([1, 2, 3], [4, 5, 6]), "b": [7, 8, 9]}
 
-for x in Dataset.from_tensor_slices(X_nested):
+for x in data.Dataset.from_tensor_slices(X_nested):
     print(x)
 
 # %%
 X_nested = {"a": [[1, 2, 3], [4, 5, 6]], "b": [[7, 8, 9], [10, 11, 12]]}
 
-for x in Dataset.from_tensor_slices(X_nested):
+for x in data.Dataset.from_tensor_slices(X_nested):
     print(x)
 
 # %% [markdown]
@@ -533,3 +533,21 @@ norm = layers.Normalization()
 model = keras.Sequential([norm, layers.Dense(1)])
 
 # %%
+NUM_TOKENS = 5
+inp = tf.constant([[1], [0], [2], [0], [3], [2], [4]])
+minp = tf.constant([[1, 2], [0, 1], [2, 3], [0, 0], [3, 4], [2, 1], [4, 0]])
+
+# %% [markdown]
+# ### `CategoryEncoding`
+
+# %%
+cat_enc = layers.CategoryEncoding(num_tokens=2 * NUM_TOKENS, output_mode="multi_hot")
+cat_enc(minp + [0, NUM_TOKENS])
+
+# %%
+print(f"minp.T:\n{tf.transpose(minp)}\n")
+oh_enc = layers.CategoryEncoding(num_tokens=NUM_TOKENS, output_mode="one_hot")
+layers.Concatenate()([oh_enc(m) for m in tf.transpose(minp)])
+
+# %%
+layers.Flatten()(tf.one_hot(minp, depth=NUM_TOKENS))
