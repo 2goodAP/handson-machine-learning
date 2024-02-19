@@ -1,3 +1,6 @@
+# %% [markdown]
+# # Exercises
+
 # %%
 import gc
 from pathlib import Path
@@ -252,7 +255,7 @@ history = model.fit(
 # %%
 final_model = keras.Sequential([norm, model])
 final_model.compile(
-    optimizer=model.optimizer, loss=model.loss, metrics=model.metrics_names[1:]
+    optimizer=model.optimizer, loss=model.loss, metrics=model.metrics[1:]
 )
 
 # %%
@@ -308,6 +311,7 @@ def create_imdb_dataset(
     cycle_len: int = CYCLE_LENGTH,
     n_threads: int = N_THREADS,
     shuf_buf_size: int | None = None,
+    batch_size: int = 64,
 ) -> data.Dataset:
     dataset = (
         data.Dataset.list_files(pos_paths)
@@ -336,9 +340,13 @@ def create_imdb_dataset(
     )
 
     return (
-        dataset.shuffle(buffer_size=shuf_buf_size)
-        if shuf_buf_size is not None
-        else dataset
+        (
+            dataset.shuffle(buffer_size=shuf_buf_size, reshuffle_each_iteration=True)
+            if shuf_buf_size is not None
+            else dataset
+        )
+        .batch(batch_size, num_parallel_calls=n_threads)
+        .prefetch(data.AUTOTUNE)
     )
 
 
@@ -371,3 +379,107 @@ del val_pos_paths, val_neg_paths, test_pos_paths, test_neg_paths
 gc.collect()
 
 # %%
+from tensorflow.keras import layers
+
+text_vec = layers.TextVectorization()
+text_vec.adapt(train_set.take(5000).map(lambda X, y: X, num_parallel_calls=N_THREADS))
+
+train_set = train_set.map(lambda X, y: (text_vec(X), y), num_parallel_calls=N_THREADS)
+val_set = val_set.map(lambda X, y: (text_vec(X), y), num_parallel_calls=N_THREADS)
+
+# %%
+DROPOUT_RATE = 0.5
+EMBED_OUT = 50
+
+
+def compute_sentence_embeddings(word_embeds: tf.Tensor, sum_axis: int = 1) -> tf.Tensor:
+    n_words = tf.math.count_nonzero(
+        tf.math.count_nonzero(word_embeds, axis=-1), axis=-1, keepdims=True
+    )
+
+    return tf.reduce_sum(word_embeds, axis=sum_axis) / tf.sqrt(
+        tf.cast(n_words, dtype=word_embeds.dtype)
+    )
+
+
+sentiment_model = keras.models.Sequential(
+    [
+        layers.Embedding(input_dim=text_vec.vocabulary_size(), output_dim=EMBED_OUT),
+        layers.Lambda(compute_sentence_embeddings),
+        layers.Dense(100, activation="relu"),
+        layers.BatchNormalization(),
+        layers.Dropout(rate=DROPOUT_RATE),
+        layers.Dense(50, activation="relu"),
+        layers.BatchNormalization(),
+        layers.Dropout(rate=DROPOUT_RATE),
+        layers.Dense(1, activation="sigmoid"),
+    ]
+)
+sentiment_model.compile(
+    optimizer="nadam",
+    loss="binary_crossentropy",
+    metrics=["accuracy", "Precision", "Recall"],
+    jit_compile=False,
+)
+
+# %%
+another_example = tf.constant(
+    [
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 0.0], [0.0, 0.0, 0.0]],
+        [[6.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+    ]
+)
+
+compute_sentence_embeddings(another_example)
+
+# %%
+from tensorflow.keras.callbacks import EarlyStopping
+
+mlflow.tensorflow.autolog()
+
+history = sentiment_model.fit(
+    train_set,
+    epochs=20,
+    validation_data=val_set,
+    callbacks=EarlyStopping(patience=10, restore_best_weights=True),
+)
+
+# %%
+final_sentiment_model = keras.models.Sequential(
+    [layers.Input(shape=(), dtype=tf.string), text_vec, sentiment_model]
+)
+final_sentiment_model.compile(
+    optimizer=sentiment_model.optimizer,
+    loss=sentiment_model.loss,
+    metrics=sentiment_model.metrics[1:],
+)
+
+# %%
+test_metrics = final_sentiment_model.evaluate(test_set)
+
+# %% [markdown]
+# ### Using TFDS
+
+# %%
+import tensorflow_datasets as tfds
+
+train, val, test = tfds.load(
+    name="imdb_reviews",
+    split=["train", "test[:75%]", "test[75%:]"],
+    as_supervised=True,
+    shuffle_files=True,
+)
+
+# %%
+for X, y in train.take(1):
+    print(X, y)
+
+print()
+
+for X, y in val.take(1):
+    print(X, y)
+
+print()
+
+for X, y in test.take(1):
+    print(X, y)
